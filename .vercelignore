@@ -1,0 +1,5 @@
+data/
+exploratory.ipynb
+train_model.py
+*.csv
+.git
