@@ -4,7 +4,6 @@ import pandas as pd
 from schemas import Customer
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -20,6 +19,10 @@ app.add_middleware(
 model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
 with open(model_path, 'rb') as file:
     model = pickle.load(file)
+
+@app.get("/")
+def root():
+    return {"message": "API is working"}
 
 @app.post("/predict")
 def predict(customer : Customer ):
@@ -37,8 +40,3 @@ def predict(customer : Customer ):
         return {"prediction": float(prediction[0])}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
-
-# Mount static files at the end so they don't interfere with API routes
-public_path = os.path.join(os.path.dirname(__file__), "../public")
-if os.path.exists(public_path):
-    app.mount("/", StaticFiles(directory=public_path, html=True), name="static")
