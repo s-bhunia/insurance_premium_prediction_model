@@ -20,6 +20,12 @@ model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
 with open(model_path, 'rb') as file:
     model = pickle.load(file)
 
+@app.get("/")
+def serve_frontend():
+    """Serve the index.html file"""
+    html_path = os.path.join(os.path.dirname(__file__), "index.html")
+    return FileResponse(html_path)
+
 @app.get("/api")
 def root():
     """Health check endpoint"""
