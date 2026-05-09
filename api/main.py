@@ -1,7 +1,7 @@
 import os
 import pickle
 import pandas as pd
-from schemas import Customer
+from .schemas import Customer
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,11 +20,13 @@ model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
 with open(model_path, 'rb') as file:
     model = pickle.load(file)
 
-@app.get("/")
+@app.get("/api")
 def root():
-    return {"message": "API is working"}
+    """Health check endpoint"""
+    return {"message": "Insurance Premium API is working"}
 
-@app.post("/predict")
+# Change the predict endpoint
+@app.post("/api/predict")
 def predict(customer : Customer ):
     try:
         data = pd.DataFrame([[

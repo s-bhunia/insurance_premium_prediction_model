@@ -28,7 +28,7 @@ from sklearn.metrics import r2_score
 import pickle
 
 
-df = pd.read_csv('insurance.csv')
+df = pd.read_csv('data/insurance.csv')
 
 X = df.drop(['expenses'], axis=1)
 y = df['expenses']
@@ -223,4 +223,9 @@ models.sort_values(by='RMSE', ascending=True)
 
 
 print(X_train)
-# pickle.dump(gradient_boosting_reg, open('model.pkl', 'wb'))
+
+# Save the best performing model
+import os
+model_dir = os.path.join(os.path.dirname(__file__), 'api')
+os.makedirs(model_dir, exist_ok=True)
+pickle.dump(gradient_boosting_reg, open(os.path.join(model_dir, 'model.pkl'), 'wb'))
