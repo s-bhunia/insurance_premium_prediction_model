@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Insurance Premium Calculator</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            /* Restored the trustworthy image background */
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(37, 99, 235, 0.85) 100%), 
+                        url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&q=80&w=2000') center/cover;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .calculator-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 650px;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            /* Removed overflow:hidden so dropdowns never get clipped */
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h2 {
+            color: var(--primary);
+            font-size: 26px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        /* Standard CSS Grid for robust responsiveness */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-light);
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            color: var(--text-main);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background-color: #fff;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        /* Safely combined inputs that won't break the div */
+        .input-with-unit {
+            display: flex;
+            width: 100%;
+        }
+        
+        .input-with-unit input {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+            flex: 1 1 auto; /* Takes up remaining space gracefully */
+            min-width: 0; /* Prevents flexbox blowout on small screens */
+        }
+
+        .input-with-unit select {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            background-color: #f1f5f9;
+            width: 90px; /* Fixed width for the unit selector */
+            flex-shrink: 0; /* Prevents unit dropdown from squishing */
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Result container styling */
+        #result-container {
+            display: none;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .success {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .error {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .result-title {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .result-amount {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .success .result-amount { color: #166534; }
+        .error .result-amount { 
+            color: #991b1b; 
+            font-size: 15px; 
+            font-weight: normal; 
+            text-align: left;
+        }
+
+        /* True Responsive Breakpoint */
+        @media (max-width: 600px) {
+            .calculator-card {
+                padding: 25px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr; /* Stacks everything natively */
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-card">
+    <div class="header">
+        <h2>Premium Estimate Calculator</h2>
+        <p>Enter your details below to get an instant quote.</p>
+    </div>
+
+    <form id="premiumForm" class="form-grid">
+        <div class="form-group full-width">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" placeholder="E.g. Rahul Sharma" required>
+        </div>
+
+        <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" placeholder="E.g. 35" required min="0" max="120">
+        </div>
+
+        <div class="form-group">
+            <label for="sex">Sex</label>
+            <select id="sex" required>
+                <option value="" disabled selected>Select...</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="height">Height</label>
+            <div class="input-with-unit">
+                <input type="number" step="0.01" id="height" placeholder="0.00" required>
+                <select id="heightUnit">
+                    <option value="m">Meters</option>
+                    <option value="cm">cm</option>
+                    <option value="ft">Feet</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="weight">Weight</label>
+            <div class="input-with-unit">
+                <input type="number" step="0.1" id="weight" placeholder="0.0" required>
+                <select id="weightUnit">
+                    <option value="kg">kgs</option>
+                    <option value="lbs">pounds</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="children">Number of Children</label>
+            <input type="number" id="children" value="0" min="0" required>
+        </div>
+
+        <div class="form-group">
+            <label for="smoker">Smoker?</label>
+            <select id="smoker" required>
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+            </select>
+        </div>
+
+        <div class="form-group full-width">
+            <label for="region">Region</label>
+            <select id="region" required>
+                <option value="" disabled selected>Select your region...</option>
+                <option value="southeast">Southeast</option>
+                <option value="southwest">Southwest</option>
+                <option value="northeast">Northeast</option>
+                <option value="northwest">Northwest</option>
+            </select>
+        </div>
+
+        <div class="full-width">
+            <button type="submit" id="submitBtn">Calculate Premium</button>
+        </div>
+    </form>
+
+    <div id="result-container">
+        <div class="result-title" id="result-title">Estimated Annual Premium</div>
+        <div class="result-amount" id="result-amount">₹0</div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('premiumForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('submitBtn');
+        const resultContainer = document.getElementById('result-container');
+        const resultAmount = document.getElementById('result-amount');
+        const resultTitle = document.getElementById('result-title');
+        
+        btn.textContent = 'Calculating...';
+        btn.disabled = true;
+        resultContainer.style.display = 'none';
+
+        // 1. Gather raw inputs
+        const age = parseInt(document.getElementById('age').value);
+        const sex = document.getElementById('sex').value;
+        const children = parseInt(document.getElementById('children').value);
+        const smoker = document.getElementById('smoker').value;
+        const region = document.getElementById('region').value;
+
+        // 2. Handle Height Conversion -> Always send Meters to backend
+        let rawHeight = parseFloat(document.getElementById('height').value);
+        let heightUnit = document.getElementById('heightUnit').value;
+        let heightInMeters = rawHeight;
+
+        if (heightUnit === 'cm') heightInMeters = rawHeight / 100;
+        else if (heightUnit === 'ft') heightInMeters = rawHeight * 0.3048; 
+
+        // 3. Handle Weight Conversion -> Always send Kg to backend
+        let rawWeight = parseFloat(document.getElementById('weight').value);
+        let weightUnit = document.getElementById('weightUnit').value;
+        let weightInKg = rawWeight;
+
+        if (weightUnit === 'lbs') weightInKg = rawWeight * 0.453592;
+
+        // 4. Build Payload matching the updated API schema
+        const payload = {
+            age: age,
+            sex: sex,
+            height: parseFloat(heightInMeters.toFixed(2)),
+            weight: parseFloat(weightInKg.toFixed(2)),
+            children: children,
+            smoker: smoker,
+            region: region
+        };
+
+        try {
+             const response = await fetch('/api/predict',  {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            // Handle API Errors securely
+            if (!response.ok) {
+                let errorMsg = `HTTP Error ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.detail) {
+                        errorMsg = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+                    }
+                } catch (e) {}
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+            
+            // Format to Indian Rupees
+            const formatter = new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            });
+
+            resultContainer.className = 'success';
+            resultContainer.style.display = 'block';
+            resultTitle.textContent = 'Estimated Annual Premium';
+            resultAmount.textContent = formatter.format(data.prediction);
+
+        } catch (error) {
+            console.error('API Error:', error);
+            resultContainer.className = 'error';
+            resultContainer.style.display = 'block';
+            resultTitle.textContent = 'Backend Error Details:';
+            
+            if (error.message === 'Failed to fetch') {
+                resultAmount.textContent = "Could not connect to API. Is FastAPI running on http://localhost:8000?";
+            } else {
+                resultAmount.textContent = error.message;
+            }
+        } finally {
+            btn.textContent = 'Calculate Premium';
+            btn.disabled = false;
+        }
+    });
+</script>
+
+</body>
+</html>
